@@ -259,11 +259,19 @@ class Main(QMainWindow, Ui_MainWindow):
     def keyPressEvent(self, event):  # Хот кеи
         """
         esc - выход
+
         ctrl + N - добавить праивило
         ctrl + C - изменить праивило
+
+        ctrl + shift + N - добавить урок
+        ctrl + shift + N - добавить урок
+        ctrl + shift + N - добавить урок
         """
         if event.key() == Qt.Key_Escape:
             self.close()
+
+        if event.key() == Qt.Key_Enter:
+            self.detail_f()
 
         if int(event.modifiers()) == Qt.ControlModifier:
 
@@ -272,6 +280,9 @@ class Main(QMainWindow, Ui_MainWindow):
 
             if event.key() == Qt.Key_C:
                 self.change_rule_f()
+
+            if event.key() == Qt.Key_Delete:
+                self.delete_rule_f()
 
         if int(event.modifiers()) == (Qt.ControlModifier + Qt.ShiftModifier):
 
