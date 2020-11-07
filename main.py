@@ -236,16 +236,17 @@ class Ui_Dialog(object):  # Класс с настройками для окна
         self.next_picture.setText(_translate("Dialog", ">"))
 
 
-class Main(QMainWindow, Ui_MainWindow):
+class Main(QMainWindow, Ui_MainWindow):  # Главное окно
     def __init__(self):
         super().__init__()
         self.setupUi(self)
         self.setWindowIcon(QtGui.QIcon("reading-book.ico"))
 
         self.db = sqlite3.connect("Handbook.db")  # TODO: Сделать проверку на наличие базы данных
-        self.db.cursor().execute("PRAGMA foreign_keys=ON")
+        self.db.cursor().execute("PRAGMA foreign_keys=ON")  # Фикс бага с БД (не работал CASCADE)
 
-        self.search.clicked.connect(self.select)
+        # Связь функций с виджетами
+        self.search.clicked.connect(self.update_lesson_list)
         self.delete_lesson.clicked.connect(self.delete_lesson_f)
         self.add_lesson.clicked.connect(self.add_lesson_f)
         self.change_lesson.clicked.connect(self.change_lesson_f)
@@ -253,7 +254,7 @@ class Main(QMainWindow, Ui_MainWindow):
         self.add_rule.clicked.connect(self.add_rule_f)
         self.change_rule.clicked.connect(self.change_rule_f)
         self.detail.clicked.connect(self.detail_f)
-        self.choose_lesson.currentIndexChanged.connect(self.select)
+        self.choose_lesson.currentIndexChanged.connect(self.update_lesson_list)
 
         self.refresh()
 
@@ -263,16 +264,15 @@ class Main(QMainWindow, Ui_MainWindow):
 
         ctrl + N - добавить праивило
         ctrl + C - изменить праивило
+        ctrl + Delete - удалиьт праивило
+        ctrl + Alt - подробности праивила
 
         ctrl + shift + N - добавить урок
-        ctrl + shift + N - добавить урок
-        ctrl + shift + N - добавить урок
+        ctrl + shift + C - изменить урок
+        ctrl + shift + Delete - удалить урок
         """
         if event.key() == Qt.Key_Escape:
             self.close()
-
-        if event.key() == Qt.Key_Alt:
-            self.detail_f()
 
         if int(event.modifiers()) == Qt.ControlModifier:
 
@@ -285,6 +285,9 @@ class Main(QMainWindow, Ui_MainWindow):
             if event.key() == Qt.Key_Delete:
                 self.delete_rule_f()
 
+            if event.key() == Qt.Key_Alt:
+                self.detail_f()
+
         if int(event.modifiers()) == (Qt.ControlModifier + Qt.ShiftModifier):
 
             if event.key() == Qt.Key_N:
@@ -296,17 +299,22 @@ class Main(QMainWindow, Ui_MainWindow):
             if event.key() == Qt.Key_Delete:
                 self.delete_lesson_f()
 
-    def select(self):
+    def update_lesson_list(self):  # Обновить список уроков
         cur = self.db.cursor()
         lesson_id = cur.execute(
             f"""SELECT id FROM Lessons WHERE Name=?""",
             (self.choose_lesson.currentText(),),
         ).fetchall()
-        res = cur.execute(
-            f"""SELECT * FROM main WHERE Short_rule LIKE ? AND Lesson_id = ?""",
-            ("%" + self.find_label.text() + "%", lesson_id[0][0]),
-        ).fetchall()
 
+        res = []
+
+        if lesson_id:
+            res = cur.execute(
+                f"""SELECT * FROM main WHERE Short_rule LIKE ? AND Lesson_id = ?""",
+                ("%" + self.find_label.text() + "%", lesson_id[0][0]),
+            ).fetchall()  # Результат поиска
+
+        # Отображение результата в таблице
         if res:
             self.find_result.setRowCount(len(res))
             self.find_result.setColumnCount(2)
@@ -327,7 +335,7 @@ class Main(QMainWindow, Ui_MainWindow):
         self.find_result.setColumnCount(0)
         self.find_result.clear()
 
-    def refresh(self):
+    def refresh(self):  # Обновить списки уроков
         self.choose_lesson_act.clear()
         self.choose_lesson.clear()
 
@@ -384,7 +392,7 @@ class Main(QMainWindow, Ui_MainWindow):
             self.db.commit()
             self.refresh()
 
-    def delete_rule_f(self):
+    def delete_rule_f(self):  # Можно удалять несколько правил за раз
         cur = self.db.cursor()
         msg = QMessageBox()
 
@@ -399,7 +407,7 @@ class Main(QMainWindow, Ui_MainWindow):
                 "Действительно удалить правила с id " + ",".join(ids),
                 QMessageBox.Yes,
                 QMessageBox.No,
-            )
+            )  # Подтверждение
 
             if valid == QMessageBox.Yes:
                 cur.execute(
@@ -408,7 +416,7 @@ class Main(QMainWindow, Ui_MainWindow):
                 )
                 self.db.commit()
 
-            self.select()
+            self.update_lesson_list()
 
     def add_rule_f(self):
         cur = self.db.cursor()
@@ -422,7 +430,7 @@ class Main(QMainWindow, Ui_MainWindow):
             res,
             res.index(self.choose_lesson.currentText()),
             False,
-        )
+        )  # Выбрать предмет
 
         if ok_pressed:
             answer1, ok_pressed = QInputDialog.getText(
@@ -430,12 +438,12 @@ class Main(QMainWindow, Ui_MainWindow):
                 "Добавить правило",
                 "Название правила:",
                 text=self.find_label.text(),
-            )
+            )  # Ввести название
 
             if ok_pressed:
                 answer2, ok_pressed = QInputDialog.getMultiLineText(
                     self, "Добавить правило", "Полное правило:"
-                )
+                )  # Ввести полное правило
 
                 if ok_pressed:
                     file_dialog = QFileDialog()
@@ -443,7 +451,7 @@ class Main(QMainWindow, Ui_MainWindow):
                     filt = "JPEG (*.jpg);;PNG (*.png);;Все файлы (*)"
                     fnames = file_dialog.getOpenFileNames(
                         self, "Выбрать файлы", "C://Desktop", filt
-                    )[0]
+                    )[0]  # Выбрать картинки
 
                     if not fnames:
                         fnames = None
@@ -454,12 +462,13 @@ class Main(QMainWindow, Ui_MainWindow):
                     cur.execute(
                         f"""INSERT INTO main(Lesson_id, Short_rule, Full_rule, Picture_path) VALUES((SELECT id FROM Lessons WHERE Name = ?), ?, ?, ?)""",
                         (lesson, answer1, answer2, fnames),
-                    )
+                    )  # Сохранить в БД
                     self.db.commit()
 
-        self.select()
+        self.update_lesson_list()
 
     def change_rule_f(self):
+        # Действия аналогичны add_rule_f
         cur = self.db.cursor()
         rows = list(set([i.row() for i in self.find_result.selectedItems()]))
         id_ = [self.find_result.item(i, 0).text() for i in rows][0]
@@ -510,9 +519,9 @@ class Main(QMainWindow, Ui_MainWindow):
                     )
                     self.db.commit()
 
-        self.select()
+        self.update_lesson_list()
 
-    def detail_f(self):
+    def detail_f(self):  # Подробная информация о правиле (получиние и отображение данных из БД)
         cur = self.db.cursor()
         rows = list(set([i.row() for i in self.find_result.selectedItems()]))
 
@@ -524,6 +533,7 @@ class Main(QMainWindow, Ui_MainWindow):
                     f"SELECT Name FROM Lessons WHERE id = ?", (res[1],)
                 ).fetchone()
 
+                # Окно с информацией
                 dialog = QMessageBox()
                 dialog.setWindowTitle("Подробности")
                 dialog.setWindowIcon(QtGui.QIcon("reading-book.ico"))
@@ -536,17 +546,17 @@ class Main(QMainWindow, Ui_MainWindow):
                 )
                 show_pic = dialog.exec_()
 
-                if show_pic:
+                if show_pic:  # Если пользователь захочет посмотреть картинки
                     self.show_pictures(res[4])
 
-        self.select()
+        self.update_lesson_list()
 
-    def show_pictures(self, paths):
+    def show_pictures(self, paths):  # Открытие окна для просмотра картинок
         pic_dialog = PictureShow(self, paths=paths.split("|"))
         pic_dialog.exec_()
 
 
-class PictureShow(QDialog, Ui_Dialog):
+class PictureShow(QDialog, Ui_Dialog):  # Окно для отображения картинок
     def __init__(self, *args, **kwargs):
         super().__init__(*args)
         self.setupUi(self)
@@ -562,7 +572,13 @@ class PictureShow(QDialog, Ui_Dialog):
 
         self.show_image()
 
-    def keyPressEvent(self, event):
+    def keyPressEvent(self, event):  # Хот кеи
+        """
+        esc - выход
+
+        Правая стрелка - следующая картинка
+        Левая стрелка - предыдущая картинка
+        """
         if event.key() == Qt.Key_Escape:
             self.close_window()
 
@@ -577,31 +593,32 @@ class PictureShow(QDialog, Ui_Dialog):
         self.close()
 
     def prev(self):
-        self.paths.insert(0, self.paths.pop(-1))
+        self.paths.insert(0, self.paths.pop(-1))  # Картинки повторяются по кругу
         self.show_image()
 
     def nxt(self):
-        self.paths.append(self.paths.pop(0))
+        self.paths.append(self.paths.pop(0))  # Картинки повторяются по кругу
         self.show_image()
 
-    def show_image(self):
+    def show_image(self):  # Отображение картинки
         try:
             Image.open(self.paths[0]).resize((600, 400)).save(
                 f"tmp.{self.ending}", f"{self.ending.upper()}"
-            )
+            )  # Создаём временную картинку для отображения
             self.image.setPixmap(QPixmap(f"tmp.{self.ending}"))
         except FileNotFoundError:
-            self.paths = ["Pictures/Nothing.jpg"]
+            self.paths = ["Pictures/Nothing.jpg"]  # Картинка по умолчанию
             Image.open(self.paths[0]).resize((600, 400)).save(
                 f"tmp.{self.ending}", f"{self.ending.upper()}"
             )
             self.image.setPixmap(QPixmap(f"tmp.{self.ending}"))
 
 
-def except_hook(cls, exception, traceback):
+def except_hook(cls, exception, traceback):  # Отображение исключений
     sys.__excepthook__(cls, exception, traceback)
 
 
+# Запуск программы
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     ex = Main()
