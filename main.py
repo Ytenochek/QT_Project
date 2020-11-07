@@ -243,6 +243,7 @@ class Main(QMainWindow, Ui_MainWindow):
         self.setWindowIcon(QtGui.QIcon("reading-book.ico"))
 
         self.db = sqlite3.connect("Handbook.db")  # TODO: Сделать проверку на наличие базы данных
+        self.db.cursor().execute("PRAGMA foreign_keys=ON")
 
         self.search.clicked.connect(self.select)
         self.delete_lesson.clicked.connect(self.delete_lesson_f)
@@ -270,7 +271,7 @@ class Main(QMainWindow, Ui_MainWindow):
         if event.key() == Qt.Key_Escape:
             self.close()
 
-        if event.key() == Qt.Key_Enter:
+        if event.key() == Qt.Key_Alt:
             self.detail_f()
 
         if int(event.modifiers()) == Qt.ControlModifier:
@@ -314,7 +315,7 @@ class Main(QMainWindow, Ui_MainWindow):
                 self.find_result.setItem(i, 0, QtWidgets.QTableWidgetItem(str(elem[0])))
                 self.find_result.setItem(i, 1, QtWidgets.QTableWidgetItem(str(elem[2])))
 
-            self.find_result.setHorizontalHeaderLabels(("id", "Предмет"))
+            self.find_result.setHorizontalHeaderLabels(("id", "Правило"))
             self.find_result.resizeColumnsToContents()
             self.find_result.resizeRowsToContents()
 
@@ -412,7 +413,7 @@ class Main(QMainWindow, Ui_MainWindow):
     def add_rule_f(self):
         cur = self.db.cursor()
         res = cur.execute("SELECT Name FROM Lessons").fetchall()
-        res = list(map(lambda x: x[0], res))
+        res = list(map(lambda x: str(x[0]), res))
 
         lesson, ok_pressed = QInputDialog.getItem(
             self,
@@ -516,26 +517,27 @@ class Main(QMainWindow, Ui_MainWindow):
         rows = list(set([i.row() for i in self.find_result.selectedItems()]))
 
         if rows:
-            id_ = [self.find_result.item(i, 0).text() for i in rows][0]
-            res = cur.execute(f"SELECT * FROM main WHERE id = ?", (id_,)).fetchone()
-            lesson = cur.execute(
-                f"SELECT Name FROM Lessons WHERE id = ?", (res[1],)
-            ).fetchone()
+            ids = [self.find_result.item(i, 0).text() for i in rows]
+            for id_ in ids:
+                res = cur.execute(f"SELECT * FROM main WHERE id = ?", (id_,)).fetchone()
+                lesson = cur.execute(
+                    f"SELECT Name FROM Lessons WHERE id = ?", (res[1],)
+                ).fetchone()
 
-            dialog = QMessageBox()
-            dialog.setWindowTitle("Подробности")
-            dialog.setWindowIcon(QtGui.QIcon("reading-book.ico"))
-            dialog.setText(
-                f"Пердмет: {lesson[0]}\nНазвание правила: {res[2]}\nПолное правило: \n{res[3]}"
-            )
-            dialog.addButton(QtWidgets.QPushButton("Закрыть"), QMessageBox.NoRole)
-            dialog.addButton(
-                QtWidgets.QPushButton("Показать картинку"), QMessageBox.YesRole
-            )
-            show_pic = dialog.exec_()
+                dialog = QMessageBox()
+                dialog.setWindowTitle("Подробности")
+                dialog.setWindowIcon(QtGui.QIcon("reading-book.ico"))
+                dialog.setText(
+                    f"Пердмет: {lesson[0]}\nНазвание правила: {res[2]}\nПолное правило: \n{res[3]}"
+                )
+                dialog.addButton(QtWidgets.QPushButton("Закрыть"), QMessageBox.NoRole)
+                dialog.addButton(
+                    QtWidgets.QPushButton("Показать картинку"), QMessageBox.YesRole
+                )
+                show_pic = dialog.exec_()
 
-            if show_pic:
-                self.show_pictures(res[4])
+                if show_pic:
+                    self.show_pictures(res[4])
 
         self.select()
 
