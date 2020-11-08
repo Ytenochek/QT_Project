@@ -262,10 +262,10 @@ class Main(QMainWindow, Ui_MainWindow):  # Главное окно
         """
         esc - выход
 
-        ctrl + N - добавить праивило
-        ctrl + C - изменить праивило
-        ctrl + Delete - удалить праивило
-        ctrl + Alt - подробности праивила
+        ctrl + N - добавить правило
+        ctrl + C - изменить правило
+        ctrl + Delete - удалить правило
+        ctrl + Alt - подробности правила
 
         ctrl + shift + N - добавить урок
         ctrl + shift + C - изменить урок
