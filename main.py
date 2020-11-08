@@ -264,7 +264,7 @@ class Main(QMainWindow, Ui_MainWindow):  # Главное окно
 
         ctrl + N - добавить праивило
         ctrl + C - изменить праивило
-        ctrl + Delete - удалиьт праивило
+        ctrl + Delete - удалить праивило
         ctrl + Alt - подробности праивила
 
         ctrl + shift + N - добавить урок
@@ -471,53 +471,54 @@ class Main(QMainWindow, Ui_MainWindow):  # Главное окно
         # Действия аналогичны add_rule_f
         cur = self.db.cursor()
         rows = list(set([i.row() for i in self.find_result.selectedItems()]))
-        id_ = [self.find_result.item(i, 0).text() for i in rows][0]
-        lessons = cur.execute("SELECT Name FROM Lessons").fetchall()
-        lessons = list(map(lambda x: x[0], lessons))
+        ids = [self.find_result.item(i, 0).text() for i in rows][0]
+        for id_ in ids:
+            lessons = cur.execute("SELECT Name FROM Lessons").fetchall()
+            lessons = list(map(lambda x: x[0], lessons))
 
-        lesson, ok_pressed = QInputDialog.getItem(
-            self,
-            "Изменить правило",
-            "Название предмета:",
-            lessons,
-            lessons.index(self.choose_lesson.currentText()),
-            False,
-        )
-        current_rule = cur.execute("SELECT * FROM main WHERE id = ?", (id_,)).fetchone()
-
-        if ok_pressed:
-            answer1, ok_pressed = QInputDialog.getText(
-                self, "Изменить правило", "Название правила:", text=current_rule[2]
+            lesson, ok_pressed = QInputDialog.getItem(
+                self,
+                "Изменить правило",
+                "Название предмета:",
+                lessons,
+                lessons.index(self.choose_lesson.currentText()),
+                False,
             )
+            current_rule = cur.execute("SELECT * FROM main WHERE id = ?", (id_,)).fetchone()
 
             if ok_pressed:
-                answer2, ok_pressed = QInputDialog.getMultiLineText(
-                    self, "Изменить правило", "Полное правило:", text=current_rule[3]
+                answer1, ok_pressed = QInputDialog.getText(
+                    self, "Изменить правило", "Название правила:", text=current_rule[2]
                 )
 
                 if ok_pressed:
-                    file_dialog = QFileDialog()
-                    file_dialog.setFileMode(QFileDialog.ExistingFiles)
-                    filt = "JPEG (*.jpg);;PNG (*.png);;Все файлы (*)"
-                    fnames = file_dialog.getOpenFileNames(
-                        self, "Выбрать файлы", current_rule[4].split("|")[0], filt
-                    )[0]
-
-                    if not fnames:
-                        fnames = None
-                    else:
-                        fnames = "|".join(fnames)
-
-                    cur.execute(
-                        f"""UPDATE main 
-                    SET Lesson_id = (SELECT id FROM Lessons WHERE Name = ?),
-                        Short_rule = ?,
-                        Full_rule = ?,
-                        Picture_path = ?
-                    WHERE id = ?""",
-                        (lesson, answer1, answer2, fnames, id_),
+                    answer2, ok_pressed = QInputDialog.getMultiLineText(
+                        self, "Изменить правило", "Полное правило:", text=current_rule[3]
                     )
-                    self.db.commit()
+
+                    if ok_pressed:
+                        file_dialog = QFileDialog()
+                        file_dialog.setFileMode(QFileDialog.ExistingFiles)
+                        filt = "JPEG (*.jpg);;PNG (*.png);;Все файлы (*)"
+                        fnames = file_dialog.getOpenFileNames(
+                            self, "Выбрать файлы", current_rule[4].split("|")[0], filt
+                        )[0]
+
+                        if not fnames:
+                            fnames = None
+                        else:
+                            fnames = "|".join(fnames)
+
+                        cur.execute(
+                            f"""UPDATE main 
+                        SET Lesson_id = (SELECT id FROM Lessons WHERE Name = ?),
+                            Short_rule = ?,
+                            Full_rule = ?,
+                            Picture_path = ?
+                        WHERE id = ?""",
+                            (lesson, answer1, answer2, fnames, id_),
+                        )
+                        self.db.commit()
 
         self.update_lesson_list()
 
