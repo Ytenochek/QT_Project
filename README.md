@@ -8,9 +8,17 @@
 Приложение предназначено для работы на персональных компьютерах с уставленной на них интерпритатором Python версии 3.8 с установленными библотеками (requirements.txt).
 
 ## УСТАНОВКА ПРИЛОЖЕНИЯ
-### Windows
+### Закгрузка
 ``` 
 git clone https://github.com/Ytenochek/QT_Project
 cd QT_Project
-python main.py
+```
+### Запуск
+#### Windows
+```
+py main.py
+```
+#### Linux
+```
+python3.8 main.py
 ```
