@@ -20,8 +20,8 @@ class Ui_MainWindow(object):  # Класс с настройками для гл
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(1000, 900)
-        MainWindow.setMinimumSize(QtCore.QSize(1000, 900))
-        MainWindow.setMaximumSize(QtCore.QSize(1000, 900))
+        # MainWindow.setMinimumSize(QtCore.QSize(1000, 900))
+        # MainWindow.setMaximumSize(QtCore.QSize(1000, 900))
 
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
