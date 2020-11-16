@@ -591,7 +591,7 @@ class Main(QMainWindow, Ui_MainWindow):
 
         self.update_lesson_list()
 
-    def show_pictures(self, paths):
+    def show_pictures(self, paths: str):
         """
         Открытие окна для просмотра картинок
         """
