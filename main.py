@@ -16,12 +16,15 @@ from PyQt5.QtWidgets import (
 )
 
 
-class Ui_MainWindow(object):  # Класс с настройками для главного окна
+class Ui_MainWindow(object):
+    """
+    Класс с настройками для главного окна
+    """
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(1000, 900)
-        MainWindow.setMinimumSize(QtCore.QSize(1000, 900))
-        MainWindow.setMaximumSize(QtCore.QSize(1000, 900))
+        # MainWindow.setMinimumSize(QtCore.QSize(1000, 900))
+        # MainWindow.setMaximumSize(QtCore.QSize(1000, 900))
 
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
@@ -191,7 +194,10 @@ class Ui_MainWindow(object):  # Класс с настройками для гл
         self.detail.setText(_translate("MainWindow", "Подробнее"))
 
 
-class Ui_Dialog(object):  # Класс с настройками для окна с картинками
+class Ui_Dialog(object):
+    """
+    Класс с настройками для окна с картинками
+    """
     def setupUi(self, Dialog):
         Dialog.setObjectName("Dialog")
         Dialog.resize(640, 480)
@@ -236,7 +242,10 @@ class Ui_Dialog(object):  # Класс с настройками для окна
         self.next_picture.setText(_translate("Dialog", ">"))
 
 
-class Main(QMainWindow, Ui_MainWindow):  # Главное окно
+class Main(QMainWindow, Ui_MainWindow):
+    """
+    Класс, описывающий функциональность виджетов главного окна приложения и логику взаимодействия с базой данных
+    """
     def __init__(self):
         super().__init__()
         self.setupUi(self)
@@ -258,8 +267,9 @@ class Main(QMainWindow, Ui_MainWindow):  # Главное окно
 
         self.refresh()
 
-    def keyPressEvent(self, event):  # Хот кеи
+    def keyPressEvent(self, event):
         """
+        Горячие клавиши:
         esc - выход
 
         ctrl + N - добавить правило
@@ -299,7 +309,10 @@ class Main(QMainWindow, Ui_MainWindow):  # Главное окно
             if event.key() == Qt.Key_Delete:
                 self.delete_lesson_f()
 
-    def update_lesson_list(self):  # Обновить список уроков
+    def update_lesson_list(self):
+        """
+        Обновление списка правил по уроку
+        """
         cur = self.db.cursor()
         lesson_id = cur.execute(
             f"""SELECT id FROM Lessons WHERE Name=?""",
@@ -331,11 +344,17 @@ class Main(QMainWindow, Ui_MainWindow):  # Главное окно
             self.clear_result()
 
     def clear_result(self):
+        """
+        Очистка таблицы
+        """
         self.find_result.setRowCount(0)
         self.find_result.setColumnCount(0)
         self.find_result.clear()
 
-    def refresh(self):  # Обновить списки уроков
+    def refresh(self):
+        """
+        Обновление списки уроков
+        """
         self.choose_lesson_act.clear()
         self.choose_lesson.clear()
 
@@ -347,6 +366,9 @@ class Main(QMainWindow, Ui_MainWindow):  # Главное окно
             self.choose_lesson.addItem(str(lesson[0]))
 
     def delete_lesson_f(self):
+        """
+        Удаление урока
+        """
         cur = self.db.cursor()
         valid = QMessageBox.question(
             self,
@@ -365,6 +387,9 @@ class Main(QMainWindow, Ui_MainWindow):  # Главное окно
             self.refresh()
 
     def add_lesson_f(self):
+        """
+        Добавление урока
+        """
         cur = self.db.cursor()
         name, ok_pressed = QInputDialog.getText(
             self, "Введите название предмета", "Название предмета:"
@@ -376,6 +401,9 @@ class Main(QMainWindow, Ui_MainWindow):  # Главное окно
             self.refresh()
 
     def change_lesson_f(self):
+        """
+        Изменение урока
+        """
         cur = self.db.cursor()
         name, ok_pressed = QInputDialog.getText(
             self,
@@ -392,7 +420,10 @@ class Main(QMainWindow, Ui_MainWindow):  # Главное окно
             self.db.commit()
             self.refresh()
 
-    def delete_rule_f(self):  # Можно удалять несколько правил за раз
+    def delete_rule_f(self):
+        """
+        Удаление правила
+        """
         cur = self.db.cursor()
         msg = QMessageBox()
 
@@ -419,6 +450,9 @@ class Main(QMainWindow, Ui_MainWindow):  # Главное окно
             self.update_lesson_list()
 
     def add_rule_f(self):
+        """
+        Добавление правило
+        """
         cur = self.db.cursor()
         res = cur.execute("SELECT Name FROM Lessons").fetchall()
         res = list(map(lambda x: str(x[0]), res))
@@ -468,7 +502,9 @@ class Main(QMainWindow, Ui_MainWindow):  # Главное окно
         self.update_lesson_list()
 
     def change_rule_f(self):
-        # Действия аналогичны add_rule_f
+        """
+        Изменение правила
+        """
         cur = self.db.cursor()
         rows = list(set([i.row() for i in self.find_result.selectedItems()]))
         ids = [self.find_result.item(i, 0).text() for i in rows][0]
@@ -522,7 +558,10 @@ class Main(QMainWindow, Ui_MainWindow):  # Главное окно
 
         self.update_lesson_list()
 
-    def detail_f(self):  # Подробная информация о правиле (получиние и отображение данных из БД)
+    def detail_f(self):
+        """
+        Получение подробной информации о правиле (получиние и отображение данных из БД)
+        """
         cur = self.db.cursor()
         rows = list(set([i.row() for i in self.find_result.selectedItems()]))
 
@@ -552,12 +591,18 @@ class Main(QMainWindow, Ui_MainWindow):  # Главное окно
 
         self.update_lesson_list()
 
-    def show_pictures(self, paths):  # Открытие окна для просмотра картинок
+    def show_pictures(self, paths):
+        """
+        Открытие окна для просмотра картинок
+        """
         pic_dialog = PictureShow(self, paths=paths.split("|"))
         pic_dialog.exec_()
 
 
-class PictureShow(QDialog, Ui_Dialog):  # Окно для отображения картинок
+class PictureShow(QDialog, Ui_Dialog):
+    """
+    Окно для отображения картинок
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args)
         self.setupUi(self)
@@ -573,8 +618,9 @@ class PictureShow(QDialog, Ui_Dialog):  # Окно для отображения
 
         self.show_image()
 
-    def keyPressEvent(self, event):  # Хот кеи
+    def keyPressEvent(self, event):
         """
+        Горячие клавиши:
         esc - выход
 
         Правая стрелка - следующая картинка
@@ -590,18 +636,30 @@ class PictureShow(QDialog, Ui_Dialog):  # Окно для отображения
             self.prev()
 
     def close_window(self):
+        """
+        Закрытие окна
+        """
         os.remove(f"tmp.{self.ending}")
         self.close()
 
     def prev(self):
-        self.paths.insert(0, self.paths.pop(-1))  # Картинки повторяются по кругу
+        """
+        Выбрать предыдущую картинку
+        """
+        self.paths.insert(0, self.paths.pop(-1))
         self.show_image()
 
     def nxt(self):
+        """
+        Выбрать следующую картинку
+        """
         self.paths.append(self.paths.pop(0))  # Картинки повторяются по кругу
         self.show_image()
 
-    def show_image(self):  # Отображение картинки
+    def show_image(self):
+        """
+        Отображение картинки
+        """
         try:
             Image.open(self.paths[0]).resize((600, 400)).save(
                 f"tmp.{self.ending}", f"{self.ending.upper()}"
@@ -615,7 +673,10 @@ class PictureShow(QDialog, Ui_Dialog):  # Окно для отображения
             self.image.setPixmap(QPixmap(f"tmp.{self.ending}"))
 
 
-def except_hook(cls, exception, traceback):  # Отображение исключений
+def except_hook(cls, exception, traceback):
+    """
+    Отображение исключений
+    """
     sys.__excepthook__(cls, exception, traceback)
 
 
