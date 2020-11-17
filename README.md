@@ -12,6 +12,7 @@
 ``` 
 git clone https://github.com/Ytenochek/QT_Project
 cd QT_Project
+pip3 install -r requirements.txt
 ```
 ### Запуск
 #### Windows
